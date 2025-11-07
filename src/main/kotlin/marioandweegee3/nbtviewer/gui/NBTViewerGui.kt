@@ -39,10 +39,10 @@ class NBTViewerGui private constructor(
                     }
                 }
 
-                is AbstractNbtList<*> -> {
+                is AbstractNbtList -> {
                     buildList {
                         for ((index, value) in nbt.withIndex()) {
-                            add(getWidgetForElement(index.toString(), value))
+                            add(getWidgetForElement(index.toString(), value as NbtElement))
                         }
                     }
                 }
@@ -81,7 +81,7 @@ class NBTViewerGui private constructor(
 
     constructor(nbt: NbtCompound) : this(nbt as NbtElement, null, null)
 
-    private fun getWidgetForElement(index: String, element: AbstractNbtList<*>): WWidget {
+    private fun getWidgetForElement(index: String, element: AbstractNbtList): WWidget {
         val button = WButton(Text.translatable("text.nbtviewer.element.list", index))
         val name = getSubScreenName(index)
         button.setOnClick {

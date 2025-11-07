@@ -9,7 +9,9 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
+import net.minecraft.component.DataComponentTypes
 import net.minecraft.nbt.NbtCompound
+import net.minecraft.util.Hand
 import org.lwjgl.glfw.GLFW
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -36,11 +38,16 @@ object NBTViewerMod : ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             if (key.wasPressed()) {
-                val inv = client.player?.inventory
-                    ?: return@register
+                val player = client.player ?: return@register
+                val stack = player.getStackInHand(Hand.MAIN_HAND)
 
-                val nbt = inv.mainHandStack?.nbt
-                    ?: NbtCompound()
+                if (stack.isEmpty) {
+                    return@register
+                }
+
+                // Get custom NBT data from the CUSTOM_DATA component
+                val customData = stack.get(DataComponentTypes.CUSTOM_DATA)
+                val nbt = customData?.copyNbt() ?: NbtCompound()
 
                 client.setScreen(
                     NBTViewerScreen(NBTViewerGui(nbt))
