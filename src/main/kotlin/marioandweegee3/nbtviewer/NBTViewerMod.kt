@@ -45,9 +45,13 @@ object NBTViewerMod : ClientModInitializer {
                     return@register
                 }
 
-                // Get custom NBT data from the CUSTOM_DATA component
-                val customData = stack.get(DataComponentTypes.CUSTOM_DATA)
-                val nbt = customData?.copyNbt() ?: NbtCompound()
+                // Convert all item components to NBT format for display
+                // This includes enchantments, damage, custom name, lore, etc.
+                val registries = client.world?.registryManager ?: return@register
+                val nbtElement = stack.toNbt(registries)
+
+                // toNbt returns NbtElement, but for ItemStack it's always NbtCompound
+                val nbt = nbtElement as? NbtCompound ?: NbtCompound()
 
                 client.setScreen(
                     NBTViewerScreen(NBTViewerGui(nbt))
