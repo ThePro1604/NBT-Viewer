@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
 import net.minecraft.component.DataComponentTypes
+import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.util.Hand
 import org.lwjgl.glfw.GLFW
@@ -48,10 +49,12 @@ object NBTViewerMod : ClientModInitializer {
                 // Convert all item components to NBT format for display
                 // This includes enchantments, damage, custom name, lore, etc.
                 val registries = client.world?.registryManager ?: return@register
-                val nbtElement = stack.toNbt(registries)
 
-                // toNbt returns NbtElement, but for ItemStack it's always NbtCompound
-                val nbt = nbtElement as? NbtCompound ?: NbtCompound()
+                // Use the ItemStack MAP_CODEC to encode the stack to NBT
+                // copyFromCodec signature: copyFromCodec(codec, registryOps, value)
+                val nbt = NbtCompound()
+                val registryOps = registries.getOps(net.minecraft.nbt.NbtOps.INSTANCE)
+                nbt.copyFromCodec(ItemStack.MAP_CODEC, registryOps, stack)
 
                 client.setScreen(
                     NBTViewerScreen(NBTViewerGui(nbt))

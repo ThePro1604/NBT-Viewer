@@ -49,8 +49,8 @@ tasks {
     }
 
     withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = javaVersion.toString()
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(javaVersion.toString()))
         }
     }
 
