@@ -50,11 +50,14 @@ object NBTViewerMod : ClientModInitializer {
                 // This includes enchantments, damage, custom name, lore, etc.
                 val registries = client.world?.registryManager ?: return@register
 
-                // Use the ItemStack MAP_CODEC to encode the stack to NBT
-                // copyFromCodec signature: copyFromCodec(codec, registryOps, value)
-                val nbt = NbtCompound()
+                // Use the ItemStack CODEC to encode the stack to NBT
                 val registryOps = registries.getOps(net.minecraft.nbt.NbtOps.INSTANCE)
-                nbt.copyFromCodec(ItemStack.MAP_CODEC, registryOps, stack)
+                val encodedResult = ItemStack.CODEC.encodeStart(registryOps, stack)
+
+                // Get the result or use empty compound if encoding failed
+                val nbt = encodedResult.resultOrPartial { error ->
+                    logger.error("Failed to encode ItemStack: $error")
+                }.orElse(NbtCompound()) as? NbtCompound ?: NbtCompound()
 
                 client.setScreen(
                     NBTViewerScreen(NBTViewerGui(nbt))
