@@ -19,8 +19,16 @@ group = mavenGroup
 
 repositories {
     maven {
+        name = "Modrinth"
+        url = URI("https://api.modrinth.com/maven")
+    }
+    maven {
         name = "CottonMC"
         url = URI("https://server.bbkr.space/artifactory/libs-release")
+    }
+    // Local libs folder for LibGui
+    flatDir {
+        dirs("libs")
     }
 }
 
@@ -35,8 +43,11 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:$fabricVersion")
     val fabricKotlinVersion: String by project
     modImplementation("net.fabricmc:fabric-language-kotlin:$fabricKotlinVersion")
+
+    // LibGui - using local JAR file due to TLS issues with Cotton Maven on Gradle 9.x
     val libGuiVersion: String by project
-    modImplementation(include("io.github.cottonmc:LibGui:$libGuiVersion")!!)
+    modImplementation(group = "", name = "LibGui", version = libGuiVersion)
+    include(group = "", name = "LibGui", version = libGuiVersion)
 }
 
 tasks {

@@ -13,6 +13,7 @@ import net.minecraft.component.DataComponentTypes
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.util.Hand
+import net.minecraft.util.Identifier
 import org.lwjgl.glfw.GLFW
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -28,12 +29,15 @@ object NBTViewerMod : ClientModInitializer {
     override fun onInitializeClient() {
         logger.info("Initializing...")
 
+        // Create custom category for NBT Viewer keybindings
+        val category = KeyBinding.Category(Identifier.of(modId, "keys"))
+
         key = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
                 "key.nbtviewer.view_nbt",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT_ALT,
-                "category.nbtviewer.keys"
+                category
             )
         )
 
