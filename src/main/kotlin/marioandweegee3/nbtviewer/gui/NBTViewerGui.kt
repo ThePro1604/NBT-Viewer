@@ -5,14 +5,13 @@ import io.github.cottonmc.cotton.gui.widget.*
 import io.github.cottonmc.cotton.gui.widget.data.Insets
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.minecraft.client.MinecraftClient
+import net.minecraft.client.Minecraft
 import net.minecraft.nbt.*
-import net.minecraft.nbt.visitor.NbtElementVisitor
-import net.minecraft.text.Text
+import net.minecraft.network.chat.Component
 
 @Environment(EnvType.CLIENT)
 class NBTViewerGui private constructor(
-    nbt: NbtElement,
+    nbt: Tag,
     private val enclosing: NBTViewerGui?,
     val name: String?,
 ) : LightweightGuiDescription() {
@@ -24,12 +23,11 @@ class NBTViewerGui private constructor(
             insets = Insets.ROOT_PANEL
 
             val children = when (nbt) {
-                is NbtCompound -> {
+                is CompoundTag -> {
                     buildList {
                         val seq = nbt
-                            .keys
+                            .keySet()
                             .asSequence()
-                            .map { it!! }
                             .sortedWith { a, b -> String.CASE_INSENSITIVE_ORDER.compare(a, b) }
                             .map { it to nbt[it]!! }
 
@@ -39,10 +37,10 @@ class NBTViewerGui private constructor(
                     }
                 }
 
-                is AbstractNbtList -> {
+                is CollectionTag -> {
                     buildList {
                         for ((index, value) in nbt.withIndex()) {
-                            add(getWidgetForElement(index.toString(), value as NbtElement))
+                            add(getWidgetForElement(index.toString(), value))
                         }
                     }
                 }
@@ -58,18 +56,18 @@ class NBTViewerGui private constructor(
             )
 
             val button = if (enclosing !== null) {
-                WButton(Text.translatableWithFallback("text.nbtviewer.back", "Back"))
+                WButton(Component.translatableWithFallback("text.nbtviewer.back", "Back"))
                     .setOnClick {
-                        MinecraftClient
+                        Minecraft
                             .getInstance()
-                            .setScreen(NBTViewerScreen(enclosing))
+                            .gui.setScreen(NBTViewerScreen(enclosing))
                     }
             } else {
-                WButton(Text.translatableWithFallback("text.nbtviewer.close", "Close"))
+                WButton(Component.translatableWithFallback("text.nbtviewer.close", "Close"))
                     .setOnClick {
-                        MinecraftClient
+                        Minecraft
                             .getInstance()
-                            .setScreen(null)
+                            .gui.setScreen(null)
                     }
             }
 
@@ -79,95 +77,95 @@ class NBTViewerGui private constructor(
         root.validate(this)
     }
 
-    constructor(nbt: NbtCompound) : this(nbt as NbtElement, null, null)
+    constructor(nbt: CompoundTag) : this(nbt as Tag, null, null)
 
-    private fun getWidgetForElement(index: String, element: AbstractNbtList): WWidget {
-        val button = WButton(Text.translatable("text.nbtviewer.element.list", index))
+    private fun getWidgetForElement(index: String, element: CollectionTag): WWidget {
+        val button = WButton(Component.translatable("text.nbtviewer.element.list", index))
         val name = getSubScreenName(index)
         button.setOnClick {
-            MinecraftClient
+            Minecraft
                 .getInstance()
-                .setScreen(NBTViewerScreen(NBTViewerGui(element, this, name)))
+                .gui.setScreen(NBTViewerScreen(NBTViewerGui(element, this, name)))
         }
         return button
     }
 
-    private fun getWidgetForElement(index: String, element: NbtElement): WWidget {
-        var widget: WWidget = WLabel(Text.literal("undefined for type"))
+    private fun getWidgetForElement(index: String, element: Tag): WWidget {
+        var widget: WWidget = WLabel(Component.literal("undefined for type"))
 
         val enclosing = this
 
-        element.accept(object : NbtElementVisitor {
-            override fun visitString(element: NbtString) {
+        element.accept(object : TagVisitor {
+            override fun visitString(element: StringTag) {
                 widget = WButton(
-                    Text.translatable("text.nbtviewer.element.string", index, element.asString())
+                    Component.translatable("text.nbtviewer.element.string", index, element.asString().orElse(""))
                 )
             }
 
-            override fun visitByte(element: NbtByte) {
+            override fun visitByte(element: ByteTag) {
                 widget = WButton(
-                    Text.translatable("text.nbtviewer.element.int", index, element.intValue())
+                    Component.translatable("text.nbtviewer.element.int", index, element.intValue())
                 )
             }
 
-            override fun visitShort(element: NbtShort) {
+            override fun visitShort(element: ShortTag) {
                 widget = WButton(
-                    Text.translatable("text.nbtviewer.element.int", index, element.intValue())
+                    Component.translatable("text.nbtviewer.element.int", index, element.intValue())
                 )
             }
 
-            override fun visitInt(element: NbtInt) {
+            override fun visitInt(element: IntTag) {
                 widget = WButton(
-                    Text.translatable("text.nbtviewer.element.int", index, element.intValue())
+                    Component.translatable("text.nbtviewer.element.int", index, element.intValue())
                 )
             }
 
-            override fun visitLong(element: NbtLong) {
+            override fun visitLong(element: LongTag) {
                 widget = WButton(
-                    Text.translatable("text.nbtviewer.element.int", index, element.longValue())
+                    Component.translatable("text.nbtviewer.element.int", index, element.longValue())
                 )
             }
 
-            override fun visitFloat(element: NbtFloat) {
+            override fun visitFloat(element: FloatTag) {
                 widget = WButton(
-                    Text.translatable("text.nbtviewer.element.float", index, element.doubleValue())
+                    Component.translatable("text.nbtviewer.element.float", index, element.doubleValue())
                 )
             }
 
-            override fun visitDouble(element: NbtDouble) {
+            override fun visitDouble(element: DoubleTag) {
                 widget = WButton(
-                    Text.translatable("text.nbtviewer.element.float", index, element.doubleValue())
+                    Component.translatable("text.nbtviewer.element.float", index, element.doubleValue())
                 )
             }
 
-            override fun visitByteArray(element: NbtByteArray) {
+            override fun visitByteArray(element: ByteArrayTag) {
                 widget = getWidgetForElement(index, element)
             }
 
-            override fun visitIntArray(element: NbtIntArray) {
+            override fun visitIntArray(element: IntArrayTag) {
                 widget = getWidgetForElement(index, element)
             }
 
-            override fun visitLongArray(element: NbtLongArray) {
+            override fun visitLongArray(element: LongArrayTag) {
                 widget = getWidgetForElement(index, element)
             }
 
-            override fun visitList(element: NbtList) {
+            override fun visitList(element: ListTag) {
                 widget = getWidgetForElement(index, element)
             }
 
-            override fun visitCompound(compound: NbtCompound) {
-                val button = WButton(Text.translatable("text.nbtviewer.element.object", index))
+            override fun visitCompound(compound: CompoundTag) {
+                val button = WButton(Component.translatable("text.nbtviewer.element.object", index))
                 val name = getSubScreenName(index)
                 button.setOnClick {
-                    MinecraftClient
+                    Minecraft
                         .getInstance()
-                        .setScreen(NBTViewerScreen(NBTViewerGui(compound, enclosing, name)))
+                        .gui.setScreen(NBTViewerScreen(NBTViewerGui(compound, enclosing, name)))
                 }
                 widget = button
             }
 
-            override fun visitEnd(element: NbtEnd) {
+            override fun visitEnd(element: EndTag) {
             }
 
         })
