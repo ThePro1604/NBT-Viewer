@@ -14,7 +14,6 @@ import net.minecraft.nbt.NbtOps
 import net.minecraft.resources.Identifier
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.item.ItemStack
-import org.lwjgl.glfw.GLFW
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -33,8 +32,8 @@ object NBTViewerMod : ClientModInitializer {
         key = KeyMappingHelper.registerKeyMapping(
             KeyMapping(
                 "key.nbtviewer.view_nbt",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_RIGHT_ALT,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_RALT,
                 category
             )
         )
